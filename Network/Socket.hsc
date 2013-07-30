@@ -223,6 +223,7 @@ import GHC.IO.FD
 
 import Network.Socket.Internal
 import Network.Socket.Types
+import {-# SOURCE #-} qualified Network.Socket.Windows as NSW
 
 -- | Either a host name e.g., @\"haskell.org\"@ or a numeric host
 -- address string consisting of a dotted decimal IPv4 address or an
@@ -325,6 +326,7 @@ socket family stype protocol = do
     when (family == AF_INET6) $ setSocketOption sock IPv6Only 0
 # endif
 #endif
+    NSW.associate sock
     return sock
 
 -- | Build a pair of connected socket objects using the given address
@@ -393,6 +395,8 @@ bind (MkSocket s _family _stype _protocol socketStatus) addr = do
 connect :: Socket    -- Unconnected Socket
         -> SockAddr  -- Socket address stuff
         -> IO ()
+connect = NSW.connect
+#if 0
 connect sock@(MkSocket s _family _stype _protocol socketStatus) addr = do
  modifyMVar_ socketStatus $ \currentStatus -> do
  if currentStatus /= NotConnected && currentStatus /= Bound
@@ -435,6 +439,7 @@ connect sock@(MkSocket s _family _stype _protocol socketStatus) addr = do
 
     connectLoop
     return Connected
+#endif
 
 -----------------------------------------------------------------------------
 -- Listen
@@ -472,7 +477,8 @@ listen (MkSocket s _family _stype _protocol socketStatus) backlog = do
 accept :: Socket                        -- Queue Socket
        -> IO (Socket,                   -- Readable Socket
               SockAddr)                 -- Peer details
-
+accept = NSW.accept
+#if 0
 accept sock@(MkSocket s family stype protocol status) = do
  currentStatus <- readMVar status
  okay <- isAcceptable sock
@@ -513,6 +519,7 @@ accept sock@(MkSocket s family stype protocol status) = do
      addr <- peekSockAddr sockaddr
      new_status <- newMVar Connected
      return ((MkSocket new_sock family stype protocol new_status), addr)
+#endif
 
 #if defined(mingw32_HOST_OS)
 foreign import ccall unsafe "HsNet.h acceptNewSock"
