@@ -42,6 +42,7 @@ library
   if os(windows)
     other-modules:
       Network.Socket.Windows
+      Network.Socket.Windows.Bindings
       Network.Socket.Windows.Mswsock
       Network.Socket.Windows.Types
 
