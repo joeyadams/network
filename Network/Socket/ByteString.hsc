@@ -62,6 +62,7 @@ import qualified Data.ByteString as B
 import Network.Socket.ByteString.Internal
 import Network.Socket.Internal
 import Network.Socket.Types
+import qualified Network.Socket.Windows as NSW
 
 #if !defined(mingw32_HOST_OS)
 import Control.Monad (zipWithM_)
@@ -106,6 +107,8 @@ send :: Socket      -- ^ Connected socket
      -> IO Int      -- ^ Number of bytes sent
 send sock@(MkSocket s _ _ _ _) xs =
     unsafeUseAsCStringLen xs $ \(str, len) ->
+    NSW.sendBuf sock str len
+#if 0
     liftM fromIntegral $
 #if defined(mingw32_HOST_OS)
 #  if __GLASGOW_HASKELL__ >= 611
@@ -118,6 +121,7 @@ send sock@(MkSocket s _ _ _ _) xs =
 #else
         throwSocketErrorWaitWrite sock "send" $
         c_send s str (fromIntegral len) 0
+#endif
 #endif
 
 -- | Send data to the socket.  The socket must be connected to a
@@ -252,6 +256,8 @@ recv sock nbytes
     | otherwise  = createAndTrim nbytes $ recvInner sock nbytes
 
 recvInner :: Socket -> Int -> Ptr Word8 -> IO Int
+recvInner sock nbytes ptr = NSW.recvBuf sock ptr nbytes
+#if 0
 recvInner sock nbytes ptr =
     fmap fromIntegral $
 #if defined(mingw32_HOST_OS)
@@ -267,6 +273,7 @@ recvInner sock nbytes ptr =
 #endif
   where
     s = sockFd sock
+#endif
 
 -- | Receive data from the socket.  The socket need not be in a
 -- connected state.  Returns @(bytes, address)@ where @bytes@ is a

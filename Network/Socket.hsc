@@ -633,8 +633,10 @@ recvBufFrom sock@(MkSocket s family _stype _protocol _status) ptr nbytes
 send :: Socket  -- Bound/Connected Socket
      -> String  -- Data to send
      -> IO Int  -- Number of Bytes sent
-send sock@(MkSocket s _family _stype _protocol _status) xs = do
+send sock xs = do
  withCStringLen xs $ \(str, len) -> do
+   NSW.sendBuf sock str len
+#if 0
    liftM fromIntegral $
 #if defined(mingw32_HOST_OS)
 # if __GLASGOW_HASKELL__ >= 611
@@ -658,6 +660,7 @@ send sock@(MkSocket s _family _stype _protocol _status) xs = do
      throwSocketErrorWaitWrite sock "send" $
         c_send s str (fromIntegral len) 0{-flags-}
 #endif
+#endif
 
 -- | Send data to the socket. The socket must be connected to a remote
 -- socket. Returns the number of bytes sent.  Applications are
@@ -666,6 +669,8 @@ sendBuf :: Socket     -- Bound/Connected Socket
         -> Ptr Word8  -- Pointer to the data to send
         -> Int        -- Length of the buffer
         -> IO Int     -- Number of Bytes sent
+sendBuf = NSW.sendBuf
+#if 0
 sendBuf sock@(MkSocket s _family _stype _protocol _status) str len = do
    liftM fromIntegral $
 #if defined(mingw32_HOST_OS)
@@ -689,6 +694,7 @@ sendBuf sock@(MkSocket s _family _stype _protocol _status) str len = do
      throwSocketErrorWaitWrite sock "sendBuf" $
         c_send s str (fromIntegral len) 0{-flags-}
 #endif
+#endif
 
 
 -- | Receive data from the socket.  The socket must be in a connected
@@ -710,7 +716,8 @@ recvLen sock@(MkSocket s _family _stype _protocol _status) nbytes
  | nbytes <= 0 = ioError (mkInvalidRecvArgError "Network.Socket.recv")
  | otherwise   = do
      allocaBytes nbytes $ \ptr -> do
-        len <-
+        len <- NSW.recvBuf sock ptr nbytes
+#if 0
 #if defined(mingw32_HOST_OS)
 # if __GLASGOW_HASKELL__ >= 611
           readRawBufferPtr "Network.Socket.recvLen" (socket2FD sock) ptr 0
@@ -722,6 +729,7 @@ recvLen sock@(MkSocket s _family _stype _protocol _status) nbytes
 #else
                throwSocketErrorWaitRead sock "recv" $
                    c_recv s ptr (fromIntegral nbytes) 0{-flags-}
+#endif
 #endif
         let len' = fromIntegral len
         if len' == 0
@@ -748,7 +756,8 @@ recvLenBuf :: Socket -> Ptr Word8 -> Int -> IO Int
 recvLenBuf sock@(MkSocket s _family _stype _protocol _status) ptr nbytes
  | nbytes <= 0 = ioError (mkInvalidRecvArgError "Network.Socket.recvBuf")
  | otherwise   = do
-        len <-
+        len <- NSW.recvBuf sock ptr nbytes
+#if 0
 #if defined(mingw32_HOST_OS)
 # if __GLASGOW_HASKELL__ >= 611
           readRawBufferPtr "Network.Socket.recvLenBuf" (socket2FD sock) ptr 0
@@ -760,6 +769,7 @@ recvLenBuf sock@(MkSocket s _family _stype _protocol _status) ptr nbytes
 #else
                throwSocketErrorWaitRead sock "recvBuf" $
                    c_recv s (castPtr ptr) (fromIntegral nbytes) 0{-flags-}
+#endif
 #endif
         let len' = fromIntegral len
         if len' == 0
