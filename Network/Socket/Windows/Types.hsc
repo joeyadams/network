@@ -11,8 +11,8 @@ module Network.Socket.Windows.Types (
 
     -- * WSABUF
     WSABUF(..),
-    mkWSABUF,
     LPWSABUF,
+    withWSABUFs,
 
     -- * Miscellaneous
     LPWSAOVERLAPPED,
@@ -48,10 +48,6 @@ data WSABUF = WSABUF
     }
   deriving (Eq, Show)
 
--- | Convenience constructor for 'WSABUF' that does a couple minor conversions.
-mkWSABUF :: Ptr a -> Int -> WSABUF
-mkWSABUF ptr len = WSABUF{ wbLen = fromIntegral len, wbBuf = castPtr ptr }
-
 type LPWSABUF = Ptr WSABUF
 
 instance Storable WSABUF where
@@ -64,6 +60,15 @@ instance Storable WSABUF where
     poke p WSABUF{..} = do
         (#poke WSABUF, len) p wbLen
         (#poke WSABUF, buf) p wbBuf
+
+-- | Allocate a temporary array of @WSABUF@ structures, which are used with
+-- e.g. @WSARecv@ and @WSASend@.
+withWSABUFs :: [(Ptr a, Int)] -> (LPWSABUF -> DWORD -> IO r) -> IO r
+withWSABUFs xs body =
+    withArrayLen (map toWSABUF xs) $ \bufCount bufPtr ->
+    body bufPtr (fromIntegral bufCount)
+  where
+    toWSABUF (ptr, len) = WSABUF{ wbLen = fromIntegral len, wbBuf = castPtr ptr }
 
 type LPWSAOVERLAPPED = LPOVERLAPPED
 

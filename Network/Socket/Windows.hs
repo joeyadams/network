@@ -134,23 +134,23 @@ rawAccept listenSock acceptSock localAddrLen remoteAddrLen = do
 recvBuf :: Socket -> Ptr a -> Int -> IO Int
 recvBuf sock ptr nbytes
   | nbytes < 0 = throwInvalidArgument "recv" "non-positive length"
-  | otherwise  = rawRecv (sockSOCKET sock) [mkWSABUF ptr nbytes]
+  | otherwise  = rawRecv (sockSOCKET sock) [(ptr, nbytes)]
 
 sendBuf :: Socket -> Ptr a -> Int -> IO Int
-sendBuf sock ptr nbytes = rawSend (sockSOCKET sock) [mkWSABUF ptr nbytes]
+sendBuf sock ptr nbytes = rawSend (sockSOCKET sock) [(ptr, nbytes)]
 
-rawRecv :: SOCKET -> [WSABUF] -> IO Int
+rawRecv :: SOCKET -> [(Ptr a, Int)] -> IO Int
 rawRecv sock bufs =
-    withArrayLen bufs $ \bufCount bufPtr ->
+    withWSABUFs bufs $ \bufPtr bufCount ->
     with 0 $ \lpFlags ->
     withOverlappedNB "recv" sock (/= 0) $ \ol ->
-    c_WSARecv sock bufPtr (fromIntegral bufCount) nullPtr lpFlags ol nullFunPtr
+    c_WSARecv sock bufPtr bufCount nullPtr lpFlags ol nullFunPtr
 
-rawSend :: SOCKET -> [WSABUF] -> IO Int
+rawSend :: SOCKET -> [(Ptr a, Int)] -> IO Int
 rawSend sock bufs =
-    withArrayLen bufs $ \bufCount bufPtr ->
+    withWSABUFs bufs $ \bufPtr bufCount ->
     withOverlappedNB "send" sock (/= 0) $ \ol ->
-    c_WSASend sock bufPtr (fromIntegral bufCount) nullPtr 0 ol nullFunPtr
+    c_WSASend sock bufPtr bufCount nullPtr 0 ol nullFunPtr
 
 ------------------------------------------------------------------------
 -- withOverlapped wrappers for SOCKET
