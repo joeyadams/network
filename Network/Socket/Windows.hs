@@ -12,6 +12,7 @@ module Network.Socket.Windows (
 import Network.Socket.Windows.Bindings
 import Network.Socket.Windows.Mswsock
 import Network.Socket.Windows.Types
+import Network.Socket.Types
 
 import IOCP.Manager (Completion(..))
 import qualified IOCP.Manager as M
@@ -182,26 +183,11 @@ withOverlappedNB loc sock p s = do
 ------------------------------------------------------------------------
 -- Socket record accessors
 
-sockFd :: Socket -> CInt
-sockFd (MkSocket fd _ _ _ _) = fd
-
 sockSOCKET :: Socket -> SOCKET
 sockSOCKET = SOCKET . fromIntegral . sockFd
 
 sockHANDLE :: Socket -> HANDLE
 sockHANDLE = toHANDLE . sockSOCKET
-
-sockFamily :: Socket -> Family
-sockFamily (MkSocket _ family _ _ _) = family
-
-sockType :: Socket -> SocketType
-sockType (MkSocket _ _ stype _ _) = stype
-
-sockProtocol :: Socket -> ProtocolNumber
-sockProtocol (MkSocket _ _ _ protocol _) = protocol
-
-sockStatus :: Socket -> MVar SocketStatus
-sockStatus (MkSocket _ _ _ _ status) = status
 
 ------------------------------------------------------------------------
 -- Utilities
