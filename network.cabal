@@ -39,6 +39,12 @@ library
       Network.Socket.ByteString.IOVec
       Network.Socket.ByteString.MsgHdr
 
+  if os(windows)
+    other-modules:
+      Network.Socket.Windows
+      Network.Socket.Windows.Mswsock
+      Network.Socket.Windows.Types
+
   build-depends:
     base >= 3 && < 5,
     bytestring,
@@ -47,6 +53,10 @@ library
   if !os(windows)
     build-depends:
       unix >= 2
+
+  if os(windows)
+    build-depends:
+      windows-iocp
 
   extensions:
     CPP, DeriveDataTypeable, ForeignFunctionInterface, TypeSynonymInstances
