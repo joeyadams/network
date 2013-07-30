@@ -5,8 +5,8 @@ module Network.Socket.Windows (
     associate,
     connect,
     accept,
-    recv,
-    send,
+    recvBuf,
+    sendBuf,
 ) where
 
 import Network.Socket.Windows.Bindings
@@ -21,14 +21,10 @@ import IOCP.Windows
 import Control.Concurrent.MVar
 import Control.Exception
 import Control.Monad
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
-import Data.ByteString.Internal (createAndTrim)
-import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Foreign
 import Foreign.C
 import GHC.IO.Exception
-import Network.Socket hiding (connect, accept, recv, send)
+import Network.Socket hiding (connect, accept, recvBuf, sendBuf)
 import qualified Network.Socket as NS
 import Network.Socket.Internal
     ( withSockAddr
@@ -133,19 +129,15 @@ rawAccept listenSock acceptSock localAddrLen remoteAddrLen = do
 
           return (localAddr, remoteAddr)
 
--- | 'Network.Socket.ByteString.recv' calls this.
-recv :: Socket -> Int -> IO ByteString
-recv sock nbytes
+-- | Unlike 'Network.Socket.recvBuf' (which calls this), return 0 on EOF
+-- instead of throwing an exception.
+recvBuf :: Socket -> Ptr a -> Int -> IO Int
+recvBuf sock ptr nbytes
   | nbytes < 0 = throwInvalidArgument "recv" "non-positive length"
-  | otherwise  =
-      createAndTrim nbytes $ \ptr ->
-      rawRecv (sockSOCKET sock) [mkWSABUF ptr nbytes]
+  | otherwise  = rawRecv (sockSOCKET sock) [mkWSABUF ptr nbytes]
 
--- | 'Network.Socket.ByteString.send' calls this.
-send :: Socket -> ByteString -> IO Int
-send sock bs =
-    unsafeUseAsCStringLen bs $ \(ptr, nbytes) ->
-    rawSend (sockSOCKET sock) [mkWSABUF ptr nbytes]
+sendBuf :: Socket -> Ptr a -> Int -> IO Int
+sendBuf sock ptr nbytes = rawSend (sockSOCKET sock) [mkWSABUF ptr nbytes]
 
 rawRecv :: SOCKET -> [WSABUF] -> IO Int
 rawRecv sock bufs =
