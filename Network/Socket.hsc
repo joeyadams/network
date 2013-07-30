@@ -150,7 +150,6 @@ module Network.Socket
     -- * Very low level operations
     -- in case you ever want to get at the underlying file descriptor..
     , fdSocket
-    , mkSocket
 
     -- * Deprecated aliases
     -- $deprecated-aliases
@@ -259,16 +258,6 @@ socket2FD  (MkSocket fd _ _ _ _) =
   -- HACK, 1 means True
   FD{fdFD = fd,fdIsSocket_ = 1}
 #endif
-
-mkSocket :: CInt
-         -> Family
-         -> SocketType
-         -> ProtocolNumber
-         -> SocketStatus
-         -> IO Socket
-mkSocket fd fam sType pNum stat = do
-   mStat <- newMVar stat
-   return (MkSocket fd fam sType pNum mStat)
 
 
 fdSocket :: Socket -> CInt
