@@ -81,6 +81,8 @@ test-suite simple
     test-framework,
     test-framework-hunit
 
+  ghc-options: -threaded
+
 test-suite regression
   hs-source-dirs: tests
   main-is: Regression.hs
@@ -94,7 +96,7 @@ test-suite regression
     test-framework,
     test-framework-hunit
 
-  ghc-options: -Wall
+  ghc-options: -Wall -threaded
 
 test-suite uri
   hs-source-dirs: tests
@@ -108,6 +110,8 @@ test-suite uri
     test-framework,
     test-framework-hunit,
     test-framework-quickcheck2
+
+  ghc-options: -threaded
 
 source-repository head
   type:     git
